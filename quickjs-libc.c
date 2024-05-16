@@ -64,57 +64,13 @@ typedef sig_t sighandler_t;
 #include <windows.h>
 #include <math.h>
 #include <sys/utime.h>
-#define DT_DIR FILE_ATTRIBUTE_DIRECTORY
+#include "win/dirent.h"
+
 #ifndef PATH_MAX
 #define PATH_MAX MAX_PATH
 #endif
-#ifndef S_IFIFO
-#define S_IFIFO 0
-#define S_IFBLK 0
-#endif
-
-struct dirent {
-  int d_ino;
-  int d_type;
-  char d_name[MAX_PATH];
-};
-typedef struct DIR {
-  char path[MAX_PATH];
-  struct dirent dir;
-  WIN32_FIND_DATA w32FindData;
-  HANDLE hFile;
-} DIR;
-
-static DIR* opendir(const char* path) {
-  DIR* d = (DIR*)malloc(sizeof(DIR));
-  strcpy(d->path, path);
-  strcat(d->path, "\\*");
-  d->hFile = FindFirstFile(d->path, &d->w32FindData);
-  if (d->hFile == INVALID_HANDLE_VALUE) {
-    d->hFile = NULL;
-    return NULL;
-  }
-  return d;
-}
-
-static int closedir(DIR* d) {
-  if (!d) return 0;
-  if (d->hFile) FindClose(d->hFile);
-  free(d);
-  return 1;
-}
-
-static struct dirent* readdir(DIR* d) {
-  if (!d->hFile) return NULL;
-  d->dir.d_type = d->w32FindData.dwFileAttributes;
-  d->dir.d_ino = 1;
-  strcpy(d->dir.d_name, d->w32FindData.cFileName);
-  if (!FindNextFile(d->hFile, &d->w32FindData)) {
-    FindClose(d->hFile);
-    d->hFile = NULL;
-  }
-  return &d->dir;
-}
+#define popen _popen
+#define pclose _pclose
 
 #endif
 
